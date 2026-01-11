@@ -146,7 +146,7 @@ if IS_PRODUCTION or not DEBUG:
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    SECURE_HSTS_SECONDS = 31536000  # 1 год
+    SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
 
@@ -158,19 +158,16 @@ if IS_PRODUCTION or not DEBUG:
         '.pythonanywhere.com',
     ]
 
-    # Добавляем домен Railway если есть
     railway_domain = os.getenv('RAILWAY_PUBLIC_DOMAIN')
     if railway_domain:
         ALLOWED_HOSTS.append(railway_domain)
 
-    # Добавляем домен PythonAnywhere если есть
     pythonanywhere_domain = os.getenv('PYTHONANYWHERE_SITE')
     if pythonanywhere_domain:
         ALLOWED_HOSTS.append(pythonanywhere_domain)
 
-    # Настройка базы данных (PostgreSQL для production)
+    # Настройка базы данных
     import dj_database_url
-
     DATABASE_URL = os.getenv('DATABASE_URL')
     if DATABASE_URL:
         DATABASES = {
@@ -181,18 +178,16 @@ if IS_PRODUCTION or not DEBUG:
             )
         }
 
-    # Настройка статики для production
-    MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
-    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+    # НАСТРОЙКА СТАТИКИ БЕЗ WHITENOISE (временно)
+    # MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')  # ЗАКОММЕНТИРОВАТЬ
+    STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'  # ДОБАВИТЬ
 
     # Логирование
     LOGGING = {
         'version': 1,
         'disable_existing_loggers': False,
         'handlers': {
-            'console': {
-                'class': 'logging.StreamHandler',
-            },
+            'console': {'class': 'logging.StreamHandler'},
             'file': {
                 'level': 'ERROR',
                 'class': 'logging.FileHandler',
