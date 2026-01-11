@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 from dotenv import load_dotenv
-import dj_database_url  # <-- ДОБАВЛЕНО
+import dj_database_url  # Добавь эту строку!
 
 # Загружаем переменные из .env файла
 load_dotenv()
@@ -78,7 +78,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 # ==================== БАЗА ДАННЫХ ====================
 
-# Локальная база (SQLite для разработки)
+# По умолчанию SQLite (для локальной разработки)
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -86,12 +86,24 @@ DATABASES = {
     }
 }
 
-# Автоматически переключиться на Railway PostgreSQL если есть DATABASE_URL <-- ДОБАВЛЕНО
-if 'DATABASE_URL' in os.environ:
-    DATABASES['default'] = dj_database_url.config(
-        conn_max_age=600,
-        conn_health_checks=True,
-    )
+# БЕЗОПАСНОЕ ПОДКЛЮЧЕНИЕ К RAILWAY POSTGRESQL
+# Проверяем, что DATABASE_URL существует и не пустой
+DATABASE_URL = os.environ.get('DATABASE_URL', '').strip()
+
+if DATABASE_URL:
+    # Дополнительная проверка, что это PostgreSQL URL
+    if DATABASE_URL.startswith(('postgres://', 'postgresql://')):
+        try:
+            DATABASES['default'] = dj_database_url.config(
+                default=DATABASE_URL,
+                conn_max_age=600,
+                conn_health_checks=True,
+            )
+        except Exception as e:
+            print(f"ERROR: Failed to configure PostgreSQL: {e}")
+            print("Falling back to SQLite")
+    else:
+        print(f"WARNING: Invalid DATABASE_URL format (not PostgreSQL): {DATABASE_URL[:50]}...")
 
 # ==================== ВАЛИДАЦИЯ ПАРОЛЕЙ ====================
 
@@ -170,21 +182,24 @@ if IS_PRODUCTION or not DEBUG:
     if pythonanywhere_domain:
         ALLOWED_HOSTS.append(pythonanywhere_domain)
 
-    # Логирование
+    # CSRF доверенные источники (ИСПРАВЛЕНО!)
+    CSRF_TRUSTED_ORIGINS = [
+        'https://*.railway.app',
+        'https://*.pythonanywhere.com',
+    ]
+    if railway_domain:
+        CSRF_TRUSTED_ORIGINS.append(f'https://{railway_domain}')
+
+    # Логирование (ИСПРАВЛЕНО!)
     LOGGING = {
         'version': 1,
         'disable_existing_loggers': False,
         'handlers': {
             'console': {'class': 'logging.StreamHandler'},
-            'file': {
-                'level': 'ERROR',
-                'class': 'logging.FileHandler',
-                'filename': os.path.join(BASE_DIR, 'django_errors.log'),
-            },
         },
         'loggers': {
             'django': {
-                'handlers': ['console', 'file'],
+                'handlers': ['console'],
                 'level': 'INFO',
                 'propagate': True,
             },
