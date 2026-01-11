@@ -71,7 +71,8 @@ class Book(models.Model):
     mood_tags = models.ManyToManyField(MoodTag, related_name='books', verbose_name='Теги настроения')
 
     page_count = models.PositiveIntegerField(verbose_name='Количество страниц', null=True, blank=True)
-    cover_image = models.ImageField(upload_to='book_covers/', verbose_name='Обложка', null=True, blank=True)
+    # ВРЕМЕННО: закомментировали ImageField
+    # cover_image = models.ImageField(upload_to='book_covers/', verbose_name='Обложка', null=True, blank=True)
     cover_url = models.URLField(verbose_name='Ссылка на обложку', blank=True)
 
     google_books_id = models.CharField(max_length=50, blank=True, verbose_name='ID Google Books')
@@ -124,7 +125,7 @@ class Book(models.Model):
         return complexity_texts.get(self.complexity, 'Не определено')
 
 
-class UserBookInteraction(models.Model):  # ← ВЫНЕСЕНО ИЗ КЛАССА Book!
+class UserBookInteraction(models.Model):
     """Взаимодействия пользователя с книгами"""
     INTERACTION_TYPES = [
         ('view', 'Просмотр'),
