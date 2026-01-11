@@ -1,13 +1,27 @@
 from django.contrib import admin
-from django.urls import path
-from django.views.generic import RedirectView
+from django.urls import path, include
+from django.views.generic import TemplateView
+from django.contrib.auth import views as auth_views
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('', RedirectView.as_view(url='/admin/')),
-]
+    # Главная страница
+    path('', TemplateView.as_view(template_name='index.html'), name='home'),
 
-# Кастомизация заголовков админки
-admin.site.site_header = "Book Mood Matcher - Панель администратора"
-admin.site.site_title = "Админка Book Mood Matcher"
-admin.site.index_title = "Добро пожаловать в систему подбора книг!"
+    # Админка
+    path('admin/', admin.site.urls),
+
+    # Аутентификация (вход/выход)
+    path('login/', auth_views.LoginView.as_view(
+        template_name='registration/login.html',
+        redirect_authenticated_user=True
+    ), name='login'),
+
+    path('logout/', auth_views.LogoutView.as_view(
+        next_page='/'
+    ), name='logout'),
+
+    # Подключение приложений
+    path('books/', include('books.urls')),
+    path('users/', include('users.urls')),
+    path('analytics/', include('analytics.urls')),
+]
