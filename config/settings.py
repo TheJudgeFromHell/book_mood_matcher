@@ -1,10 +1,7 @@
-"""
-Django settings for MoodRead project.
-"""
-
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+import dj_database_url  # <-- ДОБАВЛЕНО
 
 # Загружаем переменные из .env файла
 load_dotenv()
@@ -89,6 +86,13 @@ DATABASES = {
     }
 }
 
+# Автоматически переключиться на Railway PostgreSQL если есть DATABASE_URL <-- ДОБАВЛЕНО
+if 'DATABASE_URL' in os.environ:
+    DATABASES['default'] = dj_database_url.config(
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
+
 # ==================== ВАЛИДАЦИЯ ПАРОЛЕЙ ====================
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -165,22 +169,6 @@ if IS_PRODUCTION or not DEBUG:
     pythonanywhere_domain = os.getenv('PYTHONANYWHERE_SITE')
     if pythonanywhere_domain:
         ALLOWED_HOSTS.append(pythonanywhere_domain)
-
-    # Настройка базы данных
-    import dj_database_url
-    DATABASE_URL = os.getenv('DATABASE_URL')
-    if DATABASE_URL:
-        DATABASES = {
-            'default': dj_database_url.config(
-                default=DATABASE_URL,
-                conn_max_age=600,
-                conn_health_checks=True,
-            )
-        }
-
-    # НАСТРОЙКА СТАТИКИ БЕЗ WHITENOISE (временно)
-    # MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')  # ЗАКОММЕНТИРОВАТЬ
-    STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'  # ДОБАВИТЬ
 
     # Логирование
     LOGGING = {
