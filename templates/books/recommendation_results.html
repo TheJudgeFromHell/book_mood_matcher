@@ -1,0 +1,250 @@
+{% extends 'base.html' %}
+
+{% block title %}Результаты подбора{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-10 mx-auto">
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-check-circle me-2"></i> Мы подобрали книги специально для вас!
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Ваши параметры:</h5>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Уровень энергии:</span>
+                                <span class="badge bg-primary">{{ session.get_energy_level_display }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Доступное время:</span>
+                                <span class="badge bg-primary">{{ session.get_time_available_display }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Текущее настроение:</span>
+                                <span class="fst-italic">{{ session.current_mood|default:"Не указано" }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Желаемое состояние:</span>
+                                <span class="fst-italic">{{ session.desired_mood_after }}</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Выбранные теги:</h5>
+                        <div class="mt-2">
+                            {% for tag in session.selected_mood_tags.all %}
+                            <span class="mood-tag">{{ tag.emoji }} {{ tag.name }}</span>
+                            {% empty %}
+                            <p class="text-muted">Теги не выбраны</p>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="mt-4">
+                            <a href="{% url 'book_recommendation' %}" class="btn btn-outline-primary">
+                                <i class="fas fa-redo me-2"></i> Новый подбор
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <h3 class="mb-4">Рекомендованные книги:</h3>
+        
+        {% for book in recommended_books %}
+        <div class="card mb-4" id="book-{{ book.id }}">
+            <div class="row g-0">
+                <div class="col-md-3">
+                    {% if book.cover_image %}
+                    <img src="{{ book.cover_image.url }}" class="img-fluid rounded-start book-cover" alt="{{ book.title }}">
+                    {% elif book.cover_url %}
+                    <img src="{{ book.cover_url }}" class="img-fluid rounded-start book-cover" alt="{{ book.title }}">
+                    {% else %}
+                    <div class="d-flex align-items-center justify-content-center h-100 bg-light">
+                        <i class="fas fa-book fa-5x text-muted"></i>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-9">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h4 class="card-title">{{ book.title }}</h4>
+                                <h5 class="card-subtitle mb-2 text-muted">{{ book.author }}</h5>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-info">{{ book.genre.name }}</span>
+                                {% if book.average_rating > 0 %}
+                                <div class="mt-1">
+                                    <small class="text-warning">
+                                        {% for i in "12345" %}
+                                        {% if forloop.counter <= book.average_rating %}
+                                        <i class="fas fa-star"></i>
+                                        {% else %}
+                                        <i class="far fa-star"></i>
+                                        {% endif %}
+                                        {% endfor %}
+                                        ({{ book.ratings_count }})
+                                    </small>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row mt-3">
+                            <div class="col-md-4">
+                                <div class="card stat-card">
+                                    <div class="card-body py-2">
+                                        <small class="text-muted">Темп чтения</small>
+                                        <div>
+                                            {% for i in "12345" %}
+                                            {% if forloop.counter <= book.pace %}
+                                            <i class="fas fa-running text-success"></i>
+                                            {% else %}
+                                            <i class="fas fa-running text-muted"></i>
+                                            {% endif %}
+                                            {% endfor %}
+                                            <small class="ms-2">{{ book.get_pace_display_text }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card stat-card">
+                                    <div class="card-body py-2">
+                                        <small class="text-muted">Сложность</small>
+                                        <div>
+                                            {% for i in "12345" %}
+                                            {% if forloop.counter <= book.complexity %}
+                                            <i class="fas fa-brain text-primary"></i>
+                                            {% else %}
+                                            <i class="fas fa-brain text-muted"></i>
+                                            {% endif %}
+                                            {% endfor %}
+                                            <small class="ms-2">{{ book.get_complexity_display_text }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card stat-card">
+                                    <div class="card-body py-2">
+                                        <small class="text-muted">Эмоциональность</small>
+                                        <div>
+                                            {% for i in "12345" %}
+                                            {% if forloop.counter <= book.emotional_intensity %}
+                                            <i class="fas fa-heart text-danger"></i>
+                                            {% else %}
+                                            <i class="fas fa-heart text-muted"></i>
+                                            {% endif %}
+                                            {% endfor %}
+                                            <small class="ms-2">
+                                                {% if book.emotional_intensity <= 2 %}Спокойная{% elif book.emotional_intensity <= 4 %}Средняя{% else %}Эмоциональная{% endif %}
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-3">
+                            {% for tag in book.mood_tags.all %}
+                            <span class="badge bg-secondary me-1">{{ tag.emoji }} {{ tag.name }}</span>
+                            {% endfor %}
+                        </div>
+
+                        <p class="card-text mt-3">{{ book.description|truncatewords:50 }}</p>
+
+                        <div class="d-flex justify-content-between mt-3">
+                            <div>
+                                <a href="{{ book.get_absolute_url }}" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-info-circle me-1"></i> Подробнее
+                                </a>
+                                {% if user.is_authenticated %}
+                                <button class="btn btn-outline-primary btn-sm save-book" data-book-id="{{ book.id }}">
+                                    <i class="far fa-bookmark me-1"></i> Сохранить
+                                </button>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <span class="text-muted">
+                                    <i class="fas fa-file-alt me-1"></i> {{ book.page_count|default:"?" }} стр.
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="alert alert-warning text-center">
+            <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+            <h4>К сожалению, по вашим параметрам не найдено подходящих книг</h4>
+            <p class="mb-0">Попробуйте изменить параметры поиска</p>
+        </div>
+        {% endfor %}
+        
+        {% if recommended_books %}
+        <div class="text-center mt-4">
+            <a href="{% url 'book_list' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-book-open me-2"></i> Посмотреть все книги
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('.save-book').click(function() {
+        const bookId = $(this).data('book-id');
+        const button = $(this);
+        
+        $.ajax({
+            url: '{% url "save_recommendation_feedback" %}',
+            method: 'POST',
+            data: {
+                'book_id': bookId,
+                'feedback_type': 'save',
+                'csrfmiddlewaretoken': '{{ csrf_token }}'
+            },
+            success: function(response) {
+                if (response.success) {
+                    button.html('<i class="fas fa-bookmark me-1"></i> Сохранено');
+                    button.removeClass('btn-outline-primary').addClass('btn-success');
+                    button.prop('disabled', true);
+
+                    showNotification('Книга сохранена в вашей коллекции!', 'success');
+                }
+            },
+            error: function() {
+                showNotification('Ошибка при сохранении книги', 'danger');
+            }
+        });
+    });
+    
+    function showNotification(message, type) {
+        const alert = $(`
+            <div class="alert alert-${type} alert-dismissible fade show position-fixed" 
+                 style="top: 20px; right: 20px; z-index: 1050;">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `);
+        $('body').append(alert);
+        
+        setTimeout(function() {
+            alert.alert('close');
+        }, 3000);
+    }
+});
+</script>
+{% endblock %}
