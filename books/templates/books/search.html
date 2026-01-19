@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+
+{% block title %}🔍 Поиск книг{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">🔍 Поиск книг</h1>
+    
+    <!-- Простая форма -->
+    <form method="get" action="/search/" class="mb-4">
+        <div class="input-group">
+            <input type="text" 
+                   name="q" 
+                   value="{{ query }}" 
+                   class="form-control" 
+                   placeholder="Введите название книги, автора или описание..."
+                   required
+                   autofocus>
+            <button type="submit" class="btn btn-primary">Найти</button>
+        </div>
+        <div class="form-text mt-2">
+            💡 Поиск не зависит от регистра. "Достоевский" = "достоевский" = "ДОСТОЕВСКИЙ"
+        </div>
+    </form>
+    
+    <!-- Результаты поиска -->
+    {% if query %}
+        <div class="mt-4">
+            <h3>
+                Результаты для "{{ query }}"
+                {% if results %}
+                <span class="badge bg-secondary">{{ results|length }}</span>
+                {% endif %}
+            </h3>
+            
+            {% if results %}
+                <div class="row mt-3">
+                    {% for book in results %}
+                    <div class="col-md-6 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ book.title }}</h5>
+                                <p class="card-text">
+                                    <strong>Автор:</strong> {{ book.author }}<br>
+                                    <strong>Настроение:</strong> 
+                                    <span class="badge 
+                                        {% if book.mood == 'happy' %}bg-success
+                                        {% elif book.mood == 'sad' %}bg-secondary
+                                        {% elif book.mood == 'inspiring' %}bg-info
+                                        {% elif book.mood == 'calm' %}bg-primary
+                                        {% elif book.mood == 'adventurous' %}bg-warning
+                                        {% elif book.mood == 'romantic' %}bg-danger
+                                        {% elif book.mood == 'mysterious' %}bg-dark
+                                        {% else %}bg-light text-dark{% endif %}">
+                                        {% if book.mood == 'happy' %}😊 Веселое
+                                        {% elif book.mood == 'sad' %}😔 Грустное
+                                        {% elif book.mood == 'inspiring' %}✨ Вдохновляющее
+                                        {% elif book.mood == 'calm' %}😌 Спокойное
+                                        {% elif book.mood == 'adventurous' %}🏞️ Приключенческое
+                                        {% elif book.mood == 'romantic' %}❤️ Романтическое
+                                        {% elif book.mood == 'mysterious' %}🕵️ Таинственное
+                                        {% elif book.mood == 'thoughtful' %}🤔 Задумчивое
+                                        {% endif %}
+                                    </span>
+                                </p>
+                                
+                                {% if book.description %}
+                                <p class="card-text small text-muted">
+                                    {{ book.description|truncatechars:150 }}
+                                </p>
+                                {% endif %}
+                                
+                                {% if book.complexity %}
+                                <p class="card-text">
+                                    <strong>Сложность:</strong> 
+                                    <span class="badge {% if book.complexity == 'easy' %}bg-success
+                                                       {% elif book.complexity == 'medium' %}bg-warning
+                                                       {% else %}bg-danger{% endif %}">
+                                        {% if book.complexity == 'easy' %}🤓 Легкая
+                                        {% elif book.complexity == 'medium' %}🧐 Средняя
+                                        {% elif book.complexity == 'hard' %}🤯 Сложная
+                                        {% endif %}
+                                    </span>
+                                </p>
+                                {% endif %}
+                                
+                                <a href="/book/{{ book.id }}/" class="btn btn-sm btn-outline-primary">
+                                    Подробнее
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-info mt-3">
+                    <h5>📚 Книги не найдены</h5>
+                    <p>По запросу "<strong>{{ query }}</strong>" ничего не найдено.</p>
+                    
+                    <h6>💡 Что попробовать:</h6>
+                    <ul>
+                        <li>Проверьте правильность написания</li>
+                        <li>Используйте только часть слова (например, "роман" вместо "романтический")</li>
+                        <li>Попробуйте искать только по автору или названию</li>
+                        <li>Посмотрите <a href="/books/">все книги</a></li>
+                    </ul>
+                    
+                    <div class="mt-3">
+                        <a href="/search/?q=достоевский" class="btn btn-sm btn-outline-secondary">достоевский</a>
+                        <a href="/search/?q=роман" class="btn btn-sm btn-outline-secondary">роман</a>
+                        <a href="/search/?q=детектив" class="btn btn-sm btn-outline-secondary">детектив</a>
+                        <a href="/search/?q=фэнтези" class="btn btn-sm btn-outline-secondary">фэнтези</a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    {% else %}
+        <!-- Советы при первом заходе -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5 class="card-title">💡 Как искать книги?</h5>
+                <div class="row mt-3">
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <div class="display-4">🔤</div>
+                            <h6>По названию</h6>
+                            <p class="small text-muted">"Война и мир", "Мастер и Маргарита"</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <div class="display-4">👤</div>
+                            <h6>По автору</h6>
+                            <p class="small text-muted">"Достоевский", "Толстой", "Пушкин"</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <div class="display-4">📖</div>
+                            <h6>По описанию</h6>
+                            <p class="small text-muted">"любовь", "приключения", "детектив"</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <h6>📊 Статистика поиска:</h6>
+                    <p class="text-muted mb-0">
+                        Всего книг в системе: <strong>{{ Book.objects.count }}</strong><br>
+                        Можно искать на русском и английском, в любом регистре.
+                    </p>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

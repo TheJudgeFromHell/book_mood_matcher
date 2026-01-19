@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BookMood - Главная</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">📚 BookMood</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/">Главная</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/books/">Все книги</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin/">Админка</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <div class="jumbotron bg-light p-5 rounded">
+            <h1 class="display-4">📖 Добро пожаловать в BookMood!</h1>
+            <p class="lead">Сервис подбора книг по вашему настроению и ритму жизни.</p>
+            <hr class="my-4">
+            <p>Устали искать, что почитать? Просто укажите свое настроение, и мы подберем идеальную книгу!</p>
+            <a class="btn btn-primary btn-lg" href="/books/" role="button">Посмотреть все книги</a>
+        </div>
+
+        <div class="row mt-5">
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">🎭 По настроению</h5>
+                        <p class="card-text">Подберите книгу, которая соответствует вашему текущему эмоциональному состоянию.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">⏱️ По времени</h5>
+                        <p class="card-text">Учитываем, сколько времени вы готовы уделить чтению.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">📊 Персонально</h5>
+                        <p class="card-text">Рекомендации на основе ваших предпочтений.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-5">
+            <h2>Как начать?</h2>
+            <ol>
+                <li>Зайдите в <a href="/admin/">админку</a> и добавьте книги</li>
+                <li>Используйте форму для подбора книг</li>
+                <li>Сохраняйте понравившиеся книги</li>
+            </ol>
+        </div>
+    </div>
+
+    <footer class="mt-5 py-3 bg-dark text-white">
+        <div class="container text-center">
+            <p>BookMood - сервис подбора книг по настроению © 2024</p>
+            <p>Сделано с ❤️ для любителей чтения</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,132 +1,183 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required, permission_required
-from django.contrib import messages
-from django.http import JsonResponse
-from django.views.decorators.http import require_POST
-from django.utils import timezone
+# books/views.py
+from django.shortcuts import render
+from django.db.models import Q
+from .models import Book
 
-from .forms import BookImportForm, BookRecommendationForm
-from .services.recommendation_engine import RecommendationEngine
-from .models import Book, ReadingSession, BookRecommendation, UserBookInteraction
 
-@login_required
-@permission_required('books.add_book', raise_exception=True)
-def import_book_view(request):
-    """Представление для импорта книг"""
-    if request.method == 'POST':
-        form = BookImportForm(request.POST)
-        if form.is_valid():
-            result = form.import_book()
-
-            if result['success']:
-                messages.success(request, result['message'])
-                if 'book' in result:
-                    return redirect('book_detail', book_id=result['book'].id)
-                return redirect('book_list')
-            else:
-                messages.error(request, result['message'])
-    else:
-        form = BookImportForm()
-
-    return render(request, 'books/import_book.html', {
-        'form': form,
-        'title': 'Импорт книги по ISBN'
+# Главная страница
+def home(request):
+    books = Book.objects.all()[:6]
+    total_books = Book.objects.count()
+    return render(request, 'books/home.html', {
+        'books': books,
+        'total_books': total_books,
+        'title': 'BookMood - Главная'
     })
 
-def book_recommendation_view(request):
-    """Основное представление для рекомендации книг"""
-    recommendation_engine = RecommendationEngine()
 
-    if request.method == 'POST':
-        form = BookRecommendationForm(request.POST)
-        if form.is_valid():
-            # Создаем сессию чтения
-            session = ReadingSession.objects.create(
-                user=request.user if request.user.is_authenticated else None,
-                energy_level=form.cleaned_data['energy_level'],
-                current_mood=form.cleaned_data['current_mood'],
-                time_available=form.cleaned_data['time_available'],
-                desired_mood_after=form.cleaned_data['desired_mood_after'],
-                ip_address=request.META.get('REMOTE_ADDR'),
-                user_agent=request.META.get('HTTP_USER_AGENT', ''),
-            )
+# Все книги
+def book_list(request):
+    books = Book.objects.all()
+    return render(request, 'books/book_list.html', {
+        'books': books,
+        'title': 'Все книги'
+    })
 
 
-            if form.cleaned_data['mood_tags']:
-                session.selected_mood_tags.set(form.cleaned_data['mood_tags'])
+# Алиас для book_list
+def all_books(request):
+    return book_list(request)
 
 
-            recommendations = recommendation_engine.recommend_books(session)
+# Подбор книг
+def selection(request):
+    """Подбор книг по настроению и сложности"""
+    # Получаем параметры
+    mood = request.GET.get('mood', '')
+    complexity = request.GET.get('complexity', '')
 
+    recommended_books = []
+    show_results = False
 
+    # Если есть параметры - показываем результаты
+    if mood or complexity:
+        show_results = True
+
+        try:
+            books = Book.objects.all()
+
+            # Фильтр по настроению (используем английские ключи)
+            if mood:
+                books = books.filter(mood=mood)
+                print(f"🔍 Ищем книги с настроением: '{mood}'")
+                print(f"📚 Найдено: {books.count()}")
+
+            # Фильтр по сложности
+            if complexity:
+                books = books.filter(complexity=complexity)
+
+            # Берем до 6 книг
+            recommended_books = books[:6]
+
+        except Exception as e:
+            print(f"❌ Ошибка подбора: {e}")
             recommended_books = []
-            for rec in recommendations:
-                book = Book.objects.get(id=rec['book_id'])
-                BookRecommendation.objects.create(
-                    session=session,
-                    book=book,
-                    relevance_score=rec['relevance_score'],
-                    match_reasons=rec['match_reasons'],
-                    is_shown=True
-                )
-                recommended_books.append(book)
+
+    # Словарь для формы: английский ключ → русское название с эмодзи
+    MOOD_FORM_CHOICES = {
+        'happy': ('Веселое', '😊'),
+        'sad': ('Грустное', '😔'),
+        'inspiring': ('Вдохновляющее', '✨'),
+        'calm': ('Спокойное', '😌'),
+        'adventurous': ('Приключенческое', '🏞️'),
+        'romantic': ('Романтическое', '❤️'),
+        'mysterious': ('Таинственное', '🕵️'),
+        'thoughtful': ('Задумчивое', '🤔'),
+    }
+
+    # Словарь для отображения в результатах
+    mood_display_dict = {key: f"{emoji} {label}" for key, (label, emoji) in MOOD_FORM_CHOICES.items()}
+
+    context = {
+        'title': 'Подобрать книгу',
+        'mood': mood,
+        'complexity': complexity,
+        'recommended_books': recommended_books,
+        'show_results': show_results,
+        'mood_choices': MOOD_FORM_CHOICES,
+        'mood_display_dict': mood_display_dict,
+    }
+
+    return render(request, 'books/selection.html', context)
 
 
-            session.save()
+# Поиск книг
+def search_books(request):
+    """Простой и надёжный поиск"""
+    # Получаем запрос
+    query = request.GET.get('q', '').strip()
 
-            return render(request, 'books/recommendation_results.html', {
-                'session': session,
-                'recommended_books': recommended_books[:5],
-                'form': form,
-            })
-    else:
-        form = BookRecommendationForm()
+    print(f"🎯 ЗАПРОС ПОИСКА: '{query}'")
 
+    results = []
+    if query:
+        from django.db.models import Q
 
-    stats = recommendation_engine.get_statistics()
-
-    return render(request, 'books/recommendation_form.html', {
-        'form': form,
-        'stats': stats,
-        'title': 'Подбор книги по настроению'
-    })
-
-
-@require_POST
-def save_recommendation_feedback(request):
-    """Сохранение обратной связи по рекомендации"""
-    if not request.user.is_authenticated:
-        return JsonResponse({'success': False, 'error': 'Требуется авторизация'})
-
-    recommendation_id = request.POST.get('recommendation_id')
-    feedback_type = request.POST.get('feedback_type')  # 'like', 'dislike', 'save'
-
-    try:
-        recommendation = BookRecommendation.objects.get(
-            id=recommendation_id,
-            session__user=request.user
+        # Ищем БЕЗ УЧЁТА РЕГИСТРА (icontains)
+        results = Book.objects.filter(
+            Q(title__icontains=query) |
+            Q(author__icontains=query) |
+            Q(description__icontains=query)
         )
 
-        if feedback_type == 'like':
-            recommendation.is_clicked = True
-            recommendation.clicked_at = timezone.now()
-            recommendation.save()
+        print(f"📚 НАЙДЕНО РЕЗУЛЬТАТОВ: {len(results)}")
+
+        # Для отладки покажем что нашли
+        for book in results[:3]:  # Покажем первые 3
+            print(f"   📖 {book.title} (автор: {book.author})")
+
+    return render(request, 'books/search.html', {
+        'results': results,
+        'query': query,
+        'title': f'Поиск: {query}' if query else 'Поиск книг'
+    })
 
 
-            UserBookInteraction.objects.create(
-                user=request.user,
-                book=recommendation.book,
-                interaction_type='like'
-            )
+# Статистика
+def statistics(request):
+    """Страница со статистикой"""
+    from django.db.models import Count
 
-        elif feedback_type == 'save':
-            UserBookInteraction.objects.create(
-                user=request.user,
-                book=recommendation.book,
-                interaction_type='save'
-            )
+    # Статистика по настроениям
+    mood_stats = Book.objects.values('mood').annotate(
+        count=Count('id')
+    ).order_by('-count')
 
-        return JsonResponse({'success': True})
+    # Преобразуем английские ключи в русские названия
+    MOOD_RU_NAMES = {
+        'happy': 'Веселое',
+        'sad': 'Грустное',
+        'inspiring': 'Вдохновляющее',
+        'calm': 'Спокойное',
+        'adventurous': 'Приключенческое',
+        'romantic': 'Романтическое',
+        'mysterious': 'Таинственное',
+        'thoughtful': 'Задумчивое',
+    }
 
-    except BookRecommendation.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'Рекомендация не найдена'})
+    for stat in mood_stats:
+        stat['mood_ru'] = MOOD_RU_NAMES.get(stat['mood'], stat['mood'])
+
+    # Статистика по сложности
+    complexity_stats = Book.objects.values('complexity').annotate(
+        count=Count('id')
+    ).order_by('-count')
+
+    # Популярные авторы
+    top_authors = Book.objects.values('author').annotate(
+        book_count=Count('id')
+    ).order_by('-book_count')[:5]
+
+    context = {
+        'title': 'Статистика',
+        'mood_stats': mood_stats,
+        'complexity_stats': complexity_stats,
+        'top_authors': top_authors,
+        'total_books': Book.objects.count(),
+    }
+
+    return render(request, 'books/statistics.html', context)
+
+
+# Детальная информация о книге
+def book_detail(request, book_id):
+    """Детальная информация о книге"""
+    try:
+        book = Book.objects.get(id=book_id)
+    except Book.DoesNotExist:
+        book = None
+
+    return render(request, 'books/book_detail.html', {
+        'book': book,
+        'title': book.title if book else 'Книга не найдена'
+    })

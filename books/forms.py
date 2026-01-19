@@ -1,84 +1,67 @@
 from django import forms
-from .models import Book, Genre, MoodTag
-from .services.google_books import BookImporter
+from .models import Book
 
 
-class BookImportForm(forms.Form):
-    """Форма для импорта книг по ISBN"""
-    isbn = forms.CharField(
-        max_length=20,
-        label='ISBN книги',
-        help_text='Введите ISBN-13 или ISBN-10'
+class BookSelectionForm(forms.Form):
+    """Форма для подбора книг по настроению"""
+
+    mood = forms.ChoiceField(
+        choices=Book.MOOD_CHOICES,
+        label='🎭 Ваше текущее настроение',
+        widget=forms.Select(attrs={
+            'class': 'form-control',
+            'style': 'font-size: 16px; padding: 10px;'
+        })
     )
 
-    genre = forms.ModelChoiceField(
-        queryset=Genre.objects.all(),
-        label='Жанр',
-        required=True
+    complexity = forms.ChoiceField(
+        choices=Book.COMPLEXITY_CHOICES,
+        label='📊 Уровень сложности',
+        widget=forms.Select(attrs={
+            'class': 'form-control',
+            'style': 'font-size: 16px; padding: 10px;'
+        })
     )
 
-    mood_tags = forms.ModelMultipleChoiceField(
-        queryset=MoodTag.objects.all(),
-        label='Теги настроения',
+    time_available = forms.ChoiceField(
+        choices=[
+            ('short', '⏱️ Мало времени (15-30 минут)'),
+            ('medium', '🕐 Средне (1-2 часа)'),
+            ('long', '🕔 Много времени (более 2 часов)'),
+        ],
+        label='⏰ Сколько времени готовы уделить чтению?',
+        widget=forms.Select(attrs={
+            'class': 'form-control',
+            'style': 'font-size: 16px; padding: 10px;'
+        })
+    )
+
+    genre_preference = forms.ChoiceField(
+        choices=[
+            ('any', '🎭 Любой жанр'),
+            ('classic', '📚 Классика'),
+            ('fantasy', '🐉 Фэнтези'),
+            ('novel', '💖 Роман'),
+            ('detective', '🔍 Детектив'),
+            ('biography', '👤 Биография'),
+        ],
+        label='📖 Предпочтительный жанр',
         required=False,
-        widget=forms.CheckboxSelectMultiple
+        widget=forms.Select(attrs={
+            'class': 'form-control',
+            'style': 'font-size: 16px; padding: 10px;'
+        })
     )
 
-    def clean_isbn(self):
-        """Валидация ISBN"""
-        isbn = self.cleaned_data['isbn']
 
-        isbn = isbn.replace('-', '').replace(' ', '')
-
-        if not isbn.isdigit():
-            raise forms.ValidationError('ISBN должен содержать только цифры')
-
-
-        if len(isbn) not in [10, 13]:
-            raise forms.ValidationError('ISBN должен содержать 10 или 13 цифр')
-
-        return isbn
-
-    def import_book(self):
-        """Импорт книги по ISBN"""
-        isbn = self.cleaned_data['isbn']
-        genre = self.cleaned_data['genre']
-        mood_tags = self.cleaned_data['mood_tags']
-
-
-        result = BookImporter.import_book_by_isbn(isbn)
-
-        if result['success']:
-            book_data = result['book_data']
-
-
-            book = Book.objects.create(
-                title=book_data['title'],
-                author=book_data['author'],
-                isbn=isbn,
-                description=book_data['description'],
-                genre=genre,
-                pace=book_data['pace'],
-                complexity=book_data['complexity'],
-                emotional_intensity=book_data['emotional_intensity'],
-                page_count=book_data['page_count'],
-                cover_url=book_data['cover_url'],
-                google_books_id=book_data['google_books_id'],
-                published_date=book_data['published_date'],
-                publisher=book_data['publisher'],
-                language=book_data['language'],
-                average_rating=book_data['average_rating'],
-                ratings_count=book_data['ratings_count'],
-            )
-
-
-            if mood_tags:
-                book.mood_tags.set(mood_tags)
-
-            return {
-                'success': True,
-                'message': f'Книга "{book.title}" успешно импортирована!',
-                'book': book
-            }
-        else:
-            return result
+class SearchForm(forms.Form):
+    """Форма для поиска книг"""
+    query = forms.CharField(
+        max_length=100,
+        label='🔍 Поиск книг',
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Введите название или автора...',
+            'style': 'font-size: 16px; padding: 10px;'
+        })
+    )

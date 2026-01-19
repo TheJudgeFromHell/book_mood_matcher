@@ -1,160 +1,99 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.core.validators import MinValueValidator, MaxValueValidator
 
 
-class Genre(models.Model):
-    """Модель жанра книги"""
-    name = models.CharField(max_length=100, verbose_name='Название жанра')
-    slug = models.SlugField(max_length=100, unique=True, verbose_name='URL')
-    description = models.TextField(blank=True, verbose_name='Описание')
-
-    class Meta:
-        verbose_name = 'Жанр'
-        verbose_name_plural = 'Жанры'
-        ordering = ['name']
-
-    def __str__(self):
-        return self.name
-
-
-class MoodTag(models.Model):
-    """Модель тега настроения/состояния"""
-    MOOD_TYPES = [
-        ('energy', 'Энергия'),
-        ('emotion', 'Эмоция'),
-        ('situation', 'Ситуация'),
-        ('goal', 'Цель'),
+# МОДЕЛЬ 1: Book (уже есть)
+class Book(models.Model):
+    MOOD_CHOICES = [
+        ('happy', 'Веселое'),
+        ('sad', 'Грустное'),
+        ('inspiring', 'Вдохновляющее'),
+        ('calm', 'Спокойное'),
+        ('adventurous', 'Приключенческое'),
+        ('romantic', 'Романтическое'),
+        ('mysterious', 'Таинственное'),
+        ('thoughtful', 'Задумчивое'),
     ]
 
-    name = models.CharField(max_length=100, verbose_name='Название тега')
-    slug = models.SlugField(max_length=100, unique=True, verbose_name='URL')
-    mood_type = models.CharField(max_length=20, choices=MOOD_TYPES, default='emotion', verbose_name='Тип настроения')
-    description = models.TextField(blank=True, verbose_name='Описание')
-    emoji = models.CharField(max_length=5, blank=True, verbose_name='Эмодзи')
+    COMPLEXITY_CHOICES = [
+        ('easy', 'Легкая'),
+        ('medium', 'Средняя'),
+        ('hard', 'Сложная'),
+    ]
 
-    class Meta:
-        verbose_name = 'Тег настроения'
-        verbose_name_plural = 'Теги настроений'
-        ordering = ['mood_type', 'name']
-
-    def __str__(self):
-        return f"{self.emoji} {self.name}"
-
-
-class Book(models.Model):
-    """Основная модель книги"""
-    title = models.CharField(max_length=300, verbose_name='Название книги')
-    author = models.CharField(max_length=200, verbose_name='Автор')
-    isbn = models.CharField(max_length=20, blank=True, verbose_name='ISBN', unique=True)
-    description = models.TextField(verbose_name='Описание')
-    genre = models.ForeignKey(Genre, on_delete=models.PROTECT, related_name='books', verbose_name='Жанр')
-
-
-    pace = models.IntegerField(
-        verbose_name='Темп чтения',
-        validators=[MinValueValidator(1), MaxValueValidator(5)],
-        help_text='1 - очень медленный/сложный, 5 - очень быстрый/легкий'
-    )
-    complexity = models.IntegerField(
-        verbose_name='Сложность',
-        validators=[MinValueValidator(1), MaxValueValidator(5)],
-        help_text='1 - очень простая, 5 - очень сложная'
-    )
-    emotional_intensity = models.IntegerField(
-        verbose_name='Эмоциональная насыщенность',
-        validators=[MinValueValidator(1), MaxValueValidator(5)],
-        default=3,
-        help_text='1 - спокойная, 5 - очень эмоциональная'
-    )
-
-    mood_tags = models.ManyToManyField(MoodTag, related_name='books', verbose_name='Теги настроения')
-
-    page_count = models.PositiveIntegerField(verbose_name='Количество страниц', null=True, blank=True)
-    # ВРЕМЕННО: закомментировали ImageField
-    # cover_image = models.ImageField(upload_to='book_covers/', verbose_name='Обложка', null=True, blank=True)
-    cover_url = models.URLField(verbose_name='Ссылка на обложку', blank=True)
-
-    google_books_id = models.CharField(max_length=50, blank=True, verbose_name='ID Google Books')
-    published_date = models.CharField(max_length=20, blank=True, verbose_name='Дата публикации')
-    publisher = models.CharField(max_length=200, blank=True, verbose_name='Издательство')
-    language = models.CharField(max_length=10, default='ru', verbose_name='Язык')
-
-    average_rating = models.FloatField(default=0, verbose_name='Средний рейтинг')
-    ratings_count = models.IntegerField(default=0, verbose_name='Количество оценок')
-
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата обновления')
-    is_active = models.BooleanField(default=True, verbose_name='Активна')
-
-    class Meta:
-        verbose_name = 'Книга'
-        verbose_name_plural = 'Книги'
-        ordering = ['title']
-        indexes = [
-            models.Index(fields=['pace', 'complexity']),
-            models.Index(fields=['title']),
-            models.Index(fields=['author']),
-        ]
+    title = models.CharField(max_length=200, verbose_name='Название')
+    author = models.CharField(max_length=100, verbose_name='Автор')
+    mood = models.CharField(max_length=50, choices=MOOD_CHOICES, verbose_name='Настроение')
+    complexity = models.CharField(max_length=50, choices=COMPLEXITY_CHOICES, verbose_name='Сложность')
+    description = models.TextField(verbose_name='Описание', blank=True)
 
     def __str__(self):
         return f"{self.title} - {self.author}"
 
-    def get_absolute_url(self):
-        from django.urls import reverse
-        return reverse('book_detail', args=[str(self.pk)])
-
-    def get_pace_display_text(self):
-        pace_texts = {
-            1: 'Очень медленный',
-            2: 'Медленный',
-            3: 'Средний',
-            4: 'Быстрый',
-            5: 'Очень быстрый'
-        }
-        return pace_texts.get(self.pace, 'Не определено')
-
-    def get_complexity_display_text(self):
-        complexity_texts = {
-            1: 'Очень простая',
-            2: 'Простая',
-            3: 'Средняя',
-            4: 'Сложная',
-            5: 'Очень сложная'
-        }
-        return complexity_texts.get(self.complexity, 'Не определено')
+    class Meta:
+        verbose_name = 'Книга'
+        verbose_name_plural = 'Книги'
 
 
-class UserBookInteraction(models.Model):
-    """Взаимодействия пользователя с книгами"""
-    INTERACTION_TYPES = [
-        ('view', 'Просмотр'),
-        ('save', 'Сохранение'),
-        ('read', 'Прочитано'),
-        ('like', 'Понравилось'),
-        ('dislike', 'Не понравилось'),
+# МОДЕЛЬ 2: UserProfile (НОВАЯ)
+class UserProfile(models.Model):
+    READING_SPEED_CHOICES = [
+        ('slow', 'Медленно'),
+        ('medium', 'Средне'),
+        ('fast', 'Быстро'),
     ]
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Пользователь')
-    book = models.ForeignKey(Book, on_delete=models.CASCADE, verbose_name='Книга')
-    interaction_type = models.CharField(max_length=20, choices=INTERACTION_TYPES, verbose_name='Тип взаимодействия')
-
-    rating = models.IntegerField(
-        null=True,
-        blank=True,
-        validators=[MinValueValidator(1), MaxValueValidator(5)],
-        verbose_name='Оценка'
+    user = models.OneToOneField(User, on_delete=models.CASCADE, verbose_name='Пользователь')
+    favorite_genres = models.CharField(max_length=200, blank=True, verbose_name='Любимые жанры')
+    reading_speed = models.CharField(
+        max_length=20,
+        choices=READING_SPEED_CHOICES,
+        default='medium',
+        verbose_name='Скорость чтения'
     )
-    review = models.TextField(blank=True, verbose_name='Отзыв')
-
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата взаимодействия')
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата обновления')
-
-    class Meta:
-        verbose_name = 'Взаимодействие пользователя'
-        verbose_name_plural = 'Взаимодействия пользователей'
-        unique_together = ['user', 'book', 'interaction_type']
-        ordering = ['-created_at']
+    favorite_books = models.ManyToManyField(Book, blank=True, verbose_name='Избранные книги')
 
     def __str__(self):
-        return f"{self.user.username} - {self.get_interaction_type_display()} - {self.book.title}"
+        return f"Профиль {self.user.username}"
+
+    class Meta:
+        verbose_name = 'Профиль пользователя'
+        verbose_name_plural = 'Профили пользователей'
+
+
+# МОДЕЛЬ 3: BookSelection (НОВАЯ)
+class BookSelection(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Пользователь')
+    selected_mood = models.CharField(max_length=50, choices=Book.MOOD_CHOICES, verbose_name='Выбранное настроение')
+    selected_complexity = models.CharField(max_length=50, choices=Book.COMPLEXITY_CHOICES,
+                                           verbose_name='Выбранная сложность')
+    selected_date = models.DateTimeField(auto_now_add=True, verbose_name='Дата подбора')
+    recommended_books = models.ManyToManyField(Book, verbose_name='Рекомендованные книги')
+
+    def __str__(self):
+        return f"Подборка {self.user.username} от {self.selected_date.strftime('%d.%m.%Y %H:%M')}"
+
+    class Meta:
+        verbose_name = 'Подборка книг'
+        verbose_name_plural = 'Подборки книг'
+        ordering = ['-selected_date']  # Сначала новые
+
+
+# Сигналы для автоматического создания профиля при создании пользователя
+# ЭТО ДОЛЖНО БЫТЬ ВНЕ ВСЕХ КЛАССОВ!
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    """Создать профиль при создании нового пользователя"""
+    if created:
+        UserProfile.objects.create(user=instance)
+
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    """Сохранить профиль при сохранении пользователя"""
+    if hasattr(instance, 'userprofile'):
+        instance.userprofile.save()

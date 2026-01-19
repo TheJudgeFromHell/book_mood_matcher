@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Статистика - BookMood</title>
+    <style>
+        body { padding: 20px; }
+        .stat-card { 
+            border: 1px solid #ddd; 
+            padding: 20px; 
+            margin: 10px; 
+            border-radius: 8px;
+            display: inline-block;
+            min-width: 200px;
+            text-align: center;
+        }
+        .stat-number { 
+            font-size: 2.5em; 
+            font-weight: bold; 
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <h1>📊 Статистика BookMood</h1>
+    
+    <a href="/">← На главную</a> | 
+    <a href="/search/">🔍 Поиск</a> | 
+    <a href="/selection/">🎯 Подобрать</a>
+    
+    <hr>
+    
+    {% if message %}
+        <div style="background: #fff3cd; padding: 15px; border-radius: 5px;">
+            ⚠️ {{ message }}
+        </div>
+    {% endif %}
+    
+    <h2>📈 Общая статистика</h2>
+    
+    <div class="stat-card">
+        <div class="stat-number">{{ stats.total_books }}</div>
+        <div>Книг в базе</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-number">{{ stats.total_users }}</div>
+        <div>Пользователей</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-number">0</div>
+        <div>Прочитано книг</div>
+    </div>
+    
+    <div style="margin-top: 40px;">
+        <h3>🏆 Самые популярные жанры</h3>
+        {% if stats.popular_genres %}
+            <ol>
+                {% for genre in stats.popular_genres %}
+                <li>{{ genre }} (0 книг)</li>
+                {% endfor %}
+            </ol>
+        {% else %}
+            <p>Данные о популярных жанрах пока не доступны.</p>
+        {% endif %}
+    </div>
+    
+    <div style="margin-top: 40px; padding: 20px; background: #f8f9fa;">
+        <h4>📅 История активности</h4>
+        <p>Статистика будет собираться по мере использования приложения.</p>
+    </div>
+</body>
+</html>
