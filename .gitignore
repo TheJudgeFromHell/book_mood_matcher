@@ -1,26 +1,24 @@
-# Django
+# .gitignore
+venv/
+__pycache__/
+*.pyc
+*.sqlite3
+.env
 *.log
 *.pot
 *.pyc
-__pycache__/
-db.sqlite3
-media/
-
-# Virtual Environment
-venv/
-env/
-ENV/
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Environment variables
+*.pyo
+*.pyd
+.Python
 .env
-.env.local
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+*.sqlite3
+*.db
+.DS_Store
+.idea/
+.vscode/
