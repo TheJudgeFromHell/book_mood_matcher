@@ -1,8 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-
-# МОДЕЛЬ 1: Book (уже есть)
 class Book(models.Model):
     MOOD_CHOICES = [
         ('happy', 'Веселое'),
@@ -34,8 +32,6 @@ class Book(models.Model):
         verbose_name = 'Книга'
         verbose_name_plural = 'Книги'
 
-
-# МОДЕЛЬ 2: UserProfile (НОВАЯ)
 class UserProfile(models.Model):
     READING_SPEED_CHOICES = [
         ('slow', 'Медленно'),
@@ -60,8 +56,6 @@ class UserProfile(models.Model):
         verbose_name = 'Профиль пользователя'
         verbose_name_plural = 'Профили пользователей'
 
-
-# МОДЕЛЬ 3: BookSelection (НОВАЯ)
 class BookSelection(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Пользователь')
     selected_mood = models.CharField(max_length=50, choices=Book.MOOD_CHOICES, verbose_name='Выбранное настроение')
