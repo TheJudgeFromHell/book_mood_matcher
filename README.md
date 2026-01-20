@@ -1,9 +1,5 @@
 # 📚 BookMood - Сервис подбора книг по настроению
 
-![Django](https://img.shields.io/badge/Django-4.2-green)
-![Python](https://img.shields.io/badge/Python-3.10-blue)
-![Bootstrap](https://img.shields.io/badge/Bootstrap-5-purple)
-
 Веб-сервис для персонализированного подбора книг на основе вашего текущего настроения и уровня занятости.
 
 ## 🚀 Особенности
@@ -24,29 +20,26 @@
 ## 📦 Установка и запуск
 
 ### 1. Клонирование репозитория
-bash
-git clone https://github.com/ваш-логин/bookmood.git
-cd bookmood
+git clone https://github.com/TheJudgeFromHell/book_mood_matcher
+
 ### 2. Создание виртуального окружения
-bash
 python -m venv venv
 
 # Активация (Windows):
 venv/Scripts/activate
 
 ### 3. Установка зависимостей
-bash
 pip install -r requirements.txt
+
 ### 4. Настройка базы данных
-bash
 python manage.py migrate
 python manage.py createsuperuser
+
 ### 5. Запуск сервера
-bash
 python manage.py runserver
+
 ### 6. Открытие в браузере
 Главная страница: http://127.0.0.1:8000/
-
 Админ-панель: http://127.0.0.1:8000/admin/
 
 ## 📁 Структура проекта
@@ -63,9 +56,7 @@ bookmood/
 ├── README.md             # Документация
 └── requirements.txt      # Зависимости
 ## 📸 Скриншоты
-https://screenshots/main.png
-https://screenshots/selection.png
-https://screenshots/statistics.png
+
 
 ## 📈 Функциональность
 Для пользователей:
