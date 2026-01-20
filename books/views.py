@@ -3,8 +3,6 @@ from django.shortcuts import render
 from django.db.models import Q
 from .models import Book
 
-
-# Главная страница
 def home(request):
     books = Book.objects.all()[:6]
     total_books = Book.objects.count()
@@ -14,8 +12,6 @@ def home(request):
         'title': 'BookMood - Главная'
     })
 
-
-# Все книги
 def book_list(request):
     books = Book.objects.all()
     return render(request, 'books/book_list.html', {
@@ -23,13 +19,9 @@ def book_list(request):
         'title': 'Все книги'
     })
 
-
-# Алиас для book_list
 def all_books(request):
     return book_list(request)
 
-
-# Подбор книг
 def selection(request):
     """Подбор книг по настроению и сложности"""
     # Получаем параметры
@@ -39,24 +31,20 @@ def selection(request):
     recommended_books = []
     show_results = False
 
-    # Если есть параметры - показываем результаты
     if mood or complexity:
         show_results = True
 
         try:
             books = Book.objects.all()
 
-            # Фильтр по настроению (используем английские ключи)
             if mood:
                 books = books.filter(mood=mood)
                 print(f"🔍 Ищем книги с настроением: '{mood}'")
                 print(f"📚 Найдено: {books.count()}")
-
-            # Фильтр по сложности
+                
             if complexity:
                 books = books.filter(complexity=complexity)
 
-            # Берем до 6 книг
             recommended_books = books[:6]
 
         except Exception as e:
