@@ -25,7 +25,7 @@ git clone https://github.com/TheJudgeFromHell/book_mood_matcher
 ### 2. Создание виртуального окружения
 python -m venv venv
 
-# Активация (Windows):
+### Активация (Windows):
 venv/Scripts/activate
 
 ### 3. Установка зависимостей
